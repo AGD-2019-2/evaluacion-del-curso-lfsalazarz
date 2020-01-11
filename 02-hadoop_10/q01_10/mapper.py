@@ -134,7 +134,89 @@
 #  Escriba un job de hadoop (en Python) que compute la cantidad de registros 
 #  por cada tipo del atributo `credit_history`.
 #
+
+#  El arachivo credit.csv contiene 1000 registros sobre aprobación de creditos. 
+#  Cada registro contiene 20 atributos que recopilan información tanto sobre el 
+#  crédito como sobre la salud financiera del solicitante.
+
 import sys
 #
 #  >>> Escriba el codigo del mapper a partir de este punto <<<
 #
+class Mapper:
+    def __init__(self, stream):
+        ##
+        ## almacena el flujo de entrada como una
+        ## variable del objeto
+        ##
+        self.stream = stream
+
+    def emit(self, key, value):
+        ##
+        ## escribe al flujo estandar de salida
+        ##
+        sys.stdout.write("{}\t{}\n".format(key, value))
+
+
+    def status(self, message):
+        ##
+        ## imprime un reporte en el flujo de error
+        ## no se debe usar el stdout, ya que en este
+        ## unicamente deben ir las parejas (key, value)
+        ##
+        sys.stderr.write('reporter:status:{}\n'.format(message))
+
+
+    def counter(self, counter, amount=1, group="ApplicationCounter"):
+        ##
+        ## imprime el valor del contador
+        ##
+        sys.stderr.write('reporter:counter:{},{},{}\n'.format(group, counter, amount))
+
+    def map(self):
+        
+        #  Escriba un job de hadoop (en Python) que compute la cantidad de registros 
+        #  por cada tipo del atributo `credit_history`.
+
+        word_counter = 0
+
+        ##
+        ## imprime un mensaje a la entrada
+        ##
+        self.status('Iniciando procesamiento ')
+
+        for v in self:
+            word_counter += 1
+            self.emit(key=v, value=1)
+        
+        ##
+        ## imprime un mensaje a la salida
+        ##
+        self.counter('num_words', amount=word_counter)
+        self.status('Finalizadno procesamiento ')
+
+    def __iter__(self):
+        ##
+        ## itera sobre cada linea de codigo recibida
+        ## a traves del flujo de entrada
+        ##
+        for line in self.stream:
+            ##
+            ## itera sobre cada palabra de la linea
+            ## (en los ciclos for, retorna las palabras
+            ## una a una)
+            ##
+            dat = line.replace('\n', '').split(',')
+            yield dat[2]
+
+
+if __name__ == "__main__":
+    ##
+    ## inicializa el objeto con el flujo de entrada
+    ##
+    mapper = Mapper(sys.stdin)
+
+    ##
+    ## ejecuta el mapper
+    ##
+    mapper.map()
